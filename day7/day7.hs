@@ -25,15 +25,13 @@ part2 lns initialBeam = fst $ evalRWS (inner (zip [0..] lns) initialBeam) () M.e
         let isSplit = beam `elem` splitters
         seen <- get
 
-        let go b = if (i+1, b) `M.member` seen 
-            then do
-                let next = seen M.! (i+1, b)
-                put (M.insert (i, b) next seen)
-                return next
-            else do
-                next <- inner xs b
-                modify (M.insert (i, b) next)
-                return next
+        --memoize
+        let go b = case M.lookup (i+1, b) seen of
+                       Just next -> return next
+                       Nothing -> do
+                           next <- inner xs b
+                           modify (M.insert (i, b) next)
+                           return next
 
         if isSplit then fmap ((+1) . sum) $ (traverse go [beam-1, beam+1]) else go beam
 
